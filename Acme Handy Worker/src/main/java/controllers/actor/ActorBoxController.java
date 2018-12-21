@@ -1,10 +1,8 @@
-package controllers;
+package controllers.actor;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.validation.Valid;
-
+import controllers.AbstractController;
+import domain.Actor;
+import domain.Box;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
@@ -13,28 +11,30 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
-
 import security.LoginService;
 import services.ActorService;
 import services.BoxService;
-import domain.Actor;
-import domain.Box;
+
+import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Controller
 @RequestMapping("box/")
-public class BoxController extends AbstractController {
-	
+public class ActorBoxController extends AbstractController {
+
 	//Services
-	
+
 	@Autowired
 	private BoxService boxService;
-	
+
 	@Autowired
 	private ActorService actorService;
 
 	// Constructors -----------------------------------------------------------
 
-	public BoxController() {
+	public ActorBoxController() {
 		super();
 	}
 	
@@ -44,19 +44,26 @@ public class BoxController extends AbstractController {
 	@RequestMapping(value="/list" , method=RequestMethod.GET)
 	public ModelAndView list() {
 		ModelAndView res;
-		List<Box> boxes = new ArrayList<>();
-		
-		Actor logged = actorService.getByUserAccountId(LoginService.getPrincipal());
-		
-		System.out.println(logged);
-		for (Box b : boxService.findAll()) {
-			if(b.getActor().equals(logged)){
-				boxes.add(b);
-			}
-		}
+		Collection<Box> boxes = boxService.findByPrincipal();
 
 		res = new ModelAndView("box/list");
 		res.addObject("boxes", boxes);
+
+		return res;
+	}
+
+	//Listing-----------------------------------------------------------
+
+
+	@RequestMapping(value="/display" , method=RequestMethod.GET)
+	public ModelAndView display(@RequestParam int boxId) {
+		ModelAndView res;
+		Box box = boxService.findOne(boxId);
+		Assert.isTrue(actorService.findByPrincipal().equals(box.getActor()));
+
+		res = new ModelAndView("box/display");
+		res.addObject("box", box);
+		res.addObject("principalBoxes", boxService.findByPrincipal());
 
 		return res;
 	}
@@ -66,7 +73,7 @@ public class BoxController extends AbstractController {
 	@RequestMapping(value="/create", method=RequestMethod.GET)
 	public ModelAndView create(){
 		ModelAndView res;
-		Box box = boxService.create(actorService.getByUserAccountId(LoginService.getPrincipal()));
+		Box box = boxService.create(actorService.findByUserAccountId(LoginService.getPrincipal()));
 		
 		res = this.createEditModelAndView(box);
 		return res;
@@ -99,7 +106,7 @@ public class BoxController extends AbstractController {
 			} catch (Throwable e) {
 				res = createEditModelAndView(box, "message.commit.error");
 				
-				//TODO: añadir el commit error al box.properties de message.
+				//TODO: añadir el commit error al box.properties de message
 			}
 		}
 		return res;

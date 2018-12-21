@@ -22,6 +22,9 @@ public class BoxService {
 	@Autowired
 	private BoxRepository boxRepository;
 
+	@Autowired
+	private ActorService actorService;
+
 	public Box create(Actor actor) {
 
 		UserAccount userAccount = LoginService.getPrincipal();
@@ -45,27 +48,23 @@ public class BoxService {
 		return boxRepository.findOne(Id);
 	}
 
-	public Collection<Box> findByActorId(int actorId) {
-		return boxRepository.findByActorId(actorId);
+	public Collection<Box> findByActor(Actor actor) {
+		return boxRepository.findByActorId(actor.getId());
+	}
+
+	public Collection<Box> findByPrincipal(){
+		Actor princial = actorService.findByPrincipal();
+		return findByActor(princial);
+	}
+
+	public Box findByPrincipalAndName(String boxName){
+		Actor principal = actorService.findByPrincipal();
+		return findByActorAndName(principal,boxName);
 	}
 
 	public Box save(Box box) {
 
 		Box result;
-
-		// UserAccount userAccount = LoginService.getPrincipal();
-		// Assert.isTrue(box.getActor().getUserAccount().equals(userAccount));
-
-		result = boxRepository.save(box);
-		return result;
-	}
-
-	public Box saveBox(Box box) {
-		
-		Box result;
-
-		UserAccount userAccount = LoginService.getPrincipal();
-		Assert.isTrue(box.getActor().getUserAccount().equals(userAccount));
 
 		result = boxRepository.save(box);
 		return result;
@@ -73,7 +72,6 @@ public class BoxService {
 
 	public void delete(Box box) {
 
-		// Assert.isTrue(!b.getSystemBox());
 		Assert.isTrue(box.getSystemBox().equals(false));
 
 		UserAccount userAccount = LoginService.getPrincipal();
@@ -110,4 +108,16 @@ public class BoxService {
 		System.out.println("se ejecuta el save de box");
 	}
 
+	public Collection<Box> findByMessage(Message message){
+		return boxRepository.findByMessageId(message.getId());
+	}
+
+	public Collection<Box> findByActorAndMessage(Actor actor, Message message){
+		return boxRepository.findByActorIdAndMessageId(actor.getId(),message.getId());
+	}
+
+	public Box findByActorAndName(Actor actor, String boxName){
+		Assert.notNull(actor);
+		return boxRepository.findByActorIdAndName(actor.getId(), boxName);
+	}
 }

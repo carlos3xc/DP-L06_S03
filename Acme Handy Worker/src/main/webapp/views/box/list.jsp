@@ -16,25 +16,25 @@
 -->
 
 <security:authorize access="isAuthenticated()">
-	<a href="box/create.do"><spring:message code='box.create'/></a>
-	
+
 	<display:table name="boxes" id="row" requestURI="box/list.do" pagesize="5">
 
-		<display:column titleKey="box.boxes">
-			<table border='1'style="width:100%">
-			<tr>
-				<td>
-				<jstl:out value="${row.name}"/><br>
-				<a href="message/list.do?boxId=${row.id}"><spring:message code ='box.listMessages'/></a><br>
-				
-				<jstl:if test="${row.systemBox == false}">
-				<a href="box/delete.do?boxId=${row.id}"><spring:message code ='box.delete'/></a><br>
-				<a href="box/edit.do?boxId=${row.id}"><spring:message code ='box.edit'/></a><br>
-				</jstl:if>
-				</td>
-			</tr>
-			</table>
+
+		<spring:message code="box.boxes" var="boxNameHeader"/>
+		<display:column property="name" title="${boxNameHeader}"/>
+
+		<display:column>
+			<a href="box/display.do?boxId=${row.id}"><spring:message code ='box.listMessages'/></a>
 		</display:column>
+		<jstl:if test="${row.systemBox == false}">
+			<display:column>
+				<a href="box/delete.do?boxId=${row.id}"><spring:message code ='box.delete'/></a>
+			</display:column>
+			<display:column>
+				<a href="box/edit.do?boxId=${row.id}"><spring:message code ='box.edit'/></a>
+			</display:column>
+		</jstl:if>
+
 	</display:table>
 	
 	<a href="box/create.do"><spring:message code='box.create'/></a>

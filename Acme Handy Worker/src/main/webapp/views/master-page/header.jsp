@@ -48,13 +48,20 @@
 		
 		<security:authorize access="isAuthenticated()">
 			<li>
+				<a class="fNiv"><spring:message code="master.page.messages" /></a>
+				<ul>
+					<li class="arrow"></li>
+					<li><a href="message/create.do"><spring:message code="master.page.messages.create" /></a></li>
+					<li><a href="box/list.do"><spring:message code="master.page.boxlist" /></a></li>
+				</ul>
+			</li>
+			<li>
 				<a class="fNiv"> 
 					<spring:message code="master.page.profile" /> 
 			        (<security:authentication property="principal.username" />)
 				</a>
 				<ul>
 					<li class="arrow"></li>
-					<li><a href="box/list.do"><spring:message code="master.page.boxlist" /></a></li>					
 					<li><a href="j_spring_security_logout"><spring:message code="master.page.logout" /> </a></li>
 				</ul>
 			</li>

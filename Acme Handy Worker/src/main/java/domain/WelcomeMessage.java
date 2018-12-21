@@ -13,7 +13,7 @@ public class WelcomeMessage extends DomainEntity {
 
 	// Attributes -------------------------------------------------------------
 
-	private String lenguajeCode;
+	private String languageCode;
 	private String text;
 
 	// Constructors -----------------------------------------------------------
@@ -26,12 +26,12 @@ public class WelcomeMessage extends DomainEntity {
 
 	@NotBlank
 	@Column(unique = true)
-	public String getLenguajeCode() {
-		return lenguajeCode;
+	public String getLanguageCode() {
+		return languageCode;
 	}
 
-	public void setLenguajeCode(String lenguajeCode) {
-		this.lenguajeCode = lenguajeCode;
+	public void setLanguageCode(String languageCode) {
+		this.languageCode = languageCode;
 	}
 
 	@NotBlank

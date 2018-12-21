@@ -7,7 +7,6 @@ import org.springframework.stereotype.Repository;
 import security.UserAccount;
 
 import domain.Actor;
-import domain.Finder;
 
 @Repository
 public interface ActorRepository extends JpaRepository<Actor, Integer>{

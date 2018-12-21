@@ -2,6 +2,7 @@ package services;
 
 import domain.WelcomeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -47,15 +48,13 @@ public class WelcomeMessageService {
 		return result;
 	}
 
-	public void delete(WelcomeMessage welcomeMessage) {
+	public WelcomeMessage findByLanguageCode(String languageCode){
+		return welcomeMessageRepository.findByLanguageCode(languageCode).iterator().next();
+	}
 
-		Authority authority = new Authority();
-		authority.setAuthority("ADMIN");
-
-		UserAccount userAccount = LoginService.getPrincipal();
-		Assert.isTrue(userAccount.getAuthorities().contains(authority));
-
-		welcomeMessageRepository.delete(welcomeMessage);
+	public WelcomeMessage findByLocaleContextHolder(){
+		String languageCode = LocaleContextHolder.getLocale().getLanguage().toLowerCase();
+		return findByLanguageCode(languageCode);
 	}
 
 }

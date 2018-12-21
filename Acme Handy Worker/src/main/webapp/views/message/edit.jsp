@@ -24,20 +24,18 @@
 			List<Actor> actors: todos los actores del sistema.
  -->
 
-<form:form action="message/edit.do" modelAttribute="userMessage">
+<form:form action="message/send.do" modelAttribute="userMessage">
 
 	<form:hidden path="id" />
 	<form:hidden path="version" />
-	
-	<form:hidden path="flagSpam" />
+
 	<form:hidden path="moment" />
 	<form:hidden path="sender"/>
-	<form:hidden path="tags"/>
 	
 	<security:authorize access="isAuthenticated()">
 	
 	<form:label path="priority">
-		<spring:message code="m.priority" />
+		<spring:message code="message.priority" />
 	</form:label>
 	
 	<form:select path="priority">
@@ -48,18 +46,18 @@
 	<form:errors cssClass="error" path="priority" />
 	<br />
 	
-	<form:label path="recipient">
-		<spring:message code="m.recipient" />
+	<form:label path="recipients">
+		<spring:message code="message.recipients" />
 	</form:label>
 	
-	<form:select path="recipient">
+	<form:select multiple="true" path="recipients">
 		<form:options items="${actors}" itemLabel="userAccount.username" itemValue="id"/>
 	</form:select>
-	<form:errors cssClass="error" path="sender" />
+	<form:errors cssClass="error" path="recipients" />
 	<br />
 	
 	<form:label path="subject">
-		<spring:message code="m.subject" />
+		<spring:message code="message.subject" />
 	</form:label>
 	
 	<form:input path="subject" />
@@ -67,27 +65,25 @@
 	<br />
 	
 	<form:label path="body">
-		<spring:message code="m.body" />
+		<spring:message code="message.body" />
 	</form:label>
 	
 	<form:textarea path="body" />
 	<form:errors cssClass="error" path="body" />
 	<br />  
-	
-	<!-- deberia ser una list y se le pide strings 
+
 	<form:label path="tags">
-		<spring:message code="m.tags" />:
+		<spring:message code="message.tags" />:
 	</form:label>
 	
 	<form:textarea path="tags" />
 	<form:errors cssClass="error" path="tags" />
 	<br />
-	-->
 	
-	<input type="submit" name="save" value="<spring:message code="m.save" />" />
+	<input type="submit" name="save" value="<spring:message code="message.save" />" />
 				
 	<input type="button" name="cancel"
-		value="<spring:message code="m.cancel" />"
+		value="<spring:message code="message.cancel" />"
 		onclick="javascript: window.location.replace('')" />
 	<br />
 	

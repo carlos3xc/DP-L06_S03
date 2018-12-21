@@ -12,18 +12,30 @@ package controllers;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ClassUtils;
+import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.support.RequestContext;
+import security.LoginService;
 import services.ConfigurationService;
+import services.WelcomeMessageService;
+
+import javax.servlet.http.HttpServletRequest;
 
 @Controller
 public class AbstractController {
 
 	@Autowired
 	ConfigurationService configurationService;
+
+	@Autowired
+	WelcomeMessageService welcomeMessageService;
 
 	// Panic handler ----------------------------------------------------------
 
@@ -48,5 +60,6 @@ public class AbstractController {
 	public String getSystemName() {
 		return configurationService.find().getSystemName();
 	}
+
 
 }

@@ -36,7 +36,7 @@
 	<security:authorize access="isAuthenticated()">
 	
 	<form:label path="priority">
-		<spring:message code="m.priority" />
+		<spring:message code="message.priority" />
 	</form:label>
 	
 	<form:select path="priority">
@@ -48,7 +48,7 @@
 	<br />
 	
 	<form:label path="sender">
-		<spring:message code="m.sender" />
+		<spring:message code="message.sender" />
 	</form:label>
 	
 	<form:select path="sender">
@@ -58,7 +58,7 @@
 	<br />
 	
 	<form:label path="subject">
-		<spring:message code="m.subject" />
+		<spring:message code="message.subject" />
 	</form:label>
 	
 	<form:input path="subject" />
@@ -66,7 +66,7 @@
 	<br />
 	
 	<form:label path="body">
-		<spring:message code="m.body" />
+		<spring:message code="message.body" />
 	</form:label>
 	
 	<form:textarea path="body" />
@@ -75,7 +75,7 @@
 	
 	<!-- deberia ser una list y se le pide strings 
 	<form:label path="tags">
-		<spring:message code="m.tags" />:
+		<spring:message code="message.tags" />:
 	</form:label>
 	
 	<form:textarea path="tags" />
@@ -86,7 +86,7 @@
 	<input type="submit" name="save" value="<spring:message code="m" />" />
 				
 	<input type="button" name="cancel"
-		value="<spring:message code="m.cancel" />"
+		value="<spring:message code="message.cancel" />"
 		onclick="javascript: window.location.replace('')" />
 	<br />
 	

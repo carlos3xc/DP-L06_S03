@@ -4,6 +4,7 @@ import domain.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import repositories.MessageRepository;
 import security.LoginService;
 import security.UserAccount;
@@ -11,6 +12,7 @@ import security.UserAccount;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 
 @Service
 @Transactional
@@ -23,21 +25,25 @@ public class MessageService {
 	// Supporting Services -----
 
 	@Autowired
-	private AdministratorService adminService;
-
-	@Autowired
 	private BoxService boxService;
 
+	@Autowired
+	private WordService wordService;
+
+	@Autowired
+	private ActorService actorService;
+
 	// Simple CRUD methods -----
-	public Message create(Actor sender) {
+	public Message create() {
 
 		Message message = new Message();
+		Actor sender = actorService.findByPrincipal();
 
-		message.setSender(sender);
-		message.setPriority("NEUTRAL");
-		message.setFlagSpam(false);
-		message.setTags(new ArrayList<String>());
 		message.setMoment(new Date (System.currentTimeMillis()-1000));
+		message.setPriority("NEUTRAL");
+		message.setSender(sender);
+		message.setTags(new ArrayList<String>());
+		message.setRecipients(new ArrayList<Actor>());
 
 		return message;
 	}
@@ -51,172 +57,116 @@ public class MessageService {
 	}
 
 	public Message save(Message message) {
-
 		Message result;
-
+		Actor principal = actorService.findByPrincipal();
 		Date moment = new Date(System.currentTimeMillis() - 1000);
 
 		message.setMoment(moment);
+		Assert.isTrue(principal.equals(message.getSender()));
 
-		result = messageRepository.saveAndFlush(message);
+		result = messageRepository.save(message);
+		addToBoxes(result);
 		return result;
 	}
 
-	public void delete(Message message) {
-
-		// El mensaje se movera a la trashbox, si el mensaje ya estaba en la
-		// trashbox se elimina del sistema.
-
-		UserAccount userAccount = LoginService.getPrincipal();
-
-		Actor recipient = message.getRecipient();
-		Actor sender = message.getSender();
-
-		Actor logged = null;
-
-		if (recipient.getUserAccount().equals(userAccount)) {
-			logged = recipient;
-		}
-		if (sender.getUserAccount().equals(userAccount)) {
-			logged = sender;
-		}
-
-		Box trash = null;
-
-		Collection<Box> loggedBoxes = boxService.findByActorId(logged.getId());
-		Collection<Box> otherboxes = new ArrayList<Box>();
-
-		for (Box box : loggedBoxes) {
-			if (box.getName().equals("Trash Box"))
-				trash = box;
-			else {
-				otherboxes.add(box);
-			}
-		}
-
-		if (trash.getMessages().contains(message)) {
-			Collection<Message> aux = trash.getMessages();
-			aux.remove(message);
-			messageRepository.delete(message);
-			boxService.save(trash);
-		} else {
-			for (Box b : otherboxes) {
-				if (b.getMessages().contains(message)) {
-					Collection<Message> aux = b.getMessages();
-					aux.remove(message);
-					Collection<Message> t = trash.getMessages();
-					t.add(message);
-
-					boxService.save(trash);
-					boxService.save(b);
-				}
-			}
-		}
-
-		// modificar para aplicarlo a la entidad correspondiente.
-		// Assert.isTrue(message.getUserAccount().equals(userAccount));
-
+	public void delete(Message message){
+		Assert.isTrue(boxService.findByMessage(message).isEmpty());
+		messageRepository.delete(message.getId());
 	}
 
-	// Other business methods -----
+	public void copy(Message message, Box box){
+		Collection<Box> principalBoxes = boxService.findByPrincipal();
+		Box boxToAddMessage = boxService.findOne(box.getId());
 
-	public void sendSystemMessages(Application application) {
+		Assert.isTrue(principalBoxes.contains(boxToAddMessage));
+		Assert.isTrue(!boxToAddMessage.getMessages().contains(message));
+		Collection<Message> messages = new HashSet<Message>(box.getMessages());
+		messages.add(message);
+		boxToAddMessage.setMessages(messages);
+	}
 
-		Administrator sender = (Administrator) adminService.findAll().toArray()[0];
+	public void move(Message message, Box oldBox, Box newBox){
+		Collection<Box> principalBoxes = boxService.findByPrincipal();
+		Box boxToRemoveMessage = boxService.findOne(oldBox.getId());
 
-		Actor handyWorker = application.getHandyWorker();
-		Actor customer = application.getFixUpTask().getCustomer();
+		Assert.isTrue(principalBoxes.contains(boxToRemoveMessage));
+		copy(message,newBox);
 
-		Message message1 = this.create(sender);
-		message1.setRecipient(handyWorker);
-		Message message2 = this.create(sender);
-		message2.setRecipient(customer);
+		Collection<Message> messages = new HashSet<Message>(boxToRemoveMessage.getMessages());
+		messages.remove(message);
+		boxToRemoveMessage.setMessages(messages);
+	}
 
-		message1.setBody("The status of the fix-up Task described as: \n"
-				+ application.getFixUpTask().getDescription()
-				+ "\n has changed you shoud revise it in the system. \n\n\n" +
+	public void delete(Message message, Box box){
+		Actor principal = actorService.findByPrincipal();
+		Collection<Box> principalBoxes = boxService.findByPrincipal();
+		Box boxToRemoveMessage = boxService.findOne(box.getId());
 
-				"El estado de la tarea de arreglo descrita como:\n"
-				+ application.getFixUpTask().getDescription()
-				+ "\n ha cambiado deberia revisar los cambios en el sistema.");
-
-		message2.setBody("The status of the fix-up Task described as: \n"
-				+ application.getFixUpTask().getDescription()
-				+ "\n has changed you shoud revise it in the system. \n\n\n" +
-
-				"El estado de la tarea de arreglo descrita como:\n"
-				+ application.getFixUpTask().getDescription()
-				+ "\n ha cambiado deberia revisar los cambios en el sistema.");
-
-		this.save(message1);
-		this.save(message2);
-
-		Collection<Box> senderBoxes = boxService.findByActorId(sender.getId());
-		Collection<Box> handyWorkerBoxes = boxService.findByActorId(handyWorker
-				.getId());
-		Collection<Box> customerBoxes = boxService.findByActorId(customer
-				.getId());
-
-		for (Box box : handyWorkerBoxes) {
-			if (box.getName().equals("In Box")) {
-				boxService.addMessageToBox(box, message1);
+		Assert.isTrue(principalBoxes.contains(boxToRemoveMessage));
+		Box principalTrashBox = boxService.findByPrincipalAndName("Trash Box");
+		/*The message is in the principal's trash box*/
+		if(principalTrashBox.equals(boxToRemoveMessage)){
+			Collection<Box> boxesToRemove = new HashSet<Box>(principalBoxes);
+			/*The message is ONLY in principal's boxes*/
+			if(boxService.findByMessage(message).size()
+					==boxService.findByActorAndMessage(principal,message).size()){
+				removeFromBoxes(message, boxesToRemove);
+				delete(message);
+				/*The message is other actors' boxes and in principal's boxes*/
+			}else{
+				boxesToRemove.remove(principalTrashBox);
+				removeFromBoxes(message,boxesToRemove);
 			}
-		}
-
-		for (Box box : customerBoxes) {
-			if (box.getName().equals("In Box")) {
-				boxService.addMessageToBox(box, message2);
-			}
-		}
-
-		for (Box box : senderBoxes) {
-			if (box.getName().equals("Out Box")) {
-				boxService.addMessageToBox(box, message2);
-				boxService.addMessageToBox(box, message1);
-			}
+		/*The message was not in the principal's trash box so we move it to the trash box*/
+		}else{
+			move(message,boxToRemoveMessage,principalTrashBox);
 		}
 	}
 
-	public void addMesageToBoxes(Message message) {
-		// No se hara en el momento de la creacion si no a posteriori
-		// cuando el mensaje este completamente escrito para evitar
-		// guardar un mensaje diferente en la Box que lo que se queria mandar.
-
-		Actor recipient = message.getRecipient();
-		Actor sender = message.getSender();
-		
-		System.out.println("se encuentra a los actores");
-
-		Collection<Box> recieverBoxes = boxService.findByActorId(recipient.getId());
-		Collection<Box> senderBoxes = boxService.findByActorId(sender.getId());
-		
-		System.out.println("se encuentran sus boxes");
-
-		for (Box box : recieverBoxes) {
-			if (box.getName().equals("In Box")) {
-				System.out.println("se intenta añadir el mensaje al inbox del actor");
-				boxService.addMessageToBox(box, message);
-				
+	private Boolean isSpam(Message message){
+		Boolean result = false;
+		Collection<Word> spamWords = wordService.findSpamWords();
+		for(Word spamWord: spamWords){
+			result = result
+					|| message.getSubject().contains(spamWord.getContent())
+					|| message.getBody().contains(spamWord.getContent());
+			if (result){
+				break;
 			}
 		}
+		return result;
+	}
 
-		for (Box box : senderBoxes) {
-			if (box.getName().equals("Out Box")) {
-				System.out.println("se crea una copia del mensaje");
-				
-				Message copia = this.create(sender);
-				copia.setBody(message.getBody());
-				copia.setSubject(message.getSubject());
-				copia.setRecipient(recipient);
-				copia.setPriority(message.getPriority());
-				
-				System.out.println("se intenta añadir el mensaje al outbox del actor");
-				
-				Message saved = this.save(copia);
-				
-				boxService.addMessageToBox(box, saved);
+	private void addToBoxes(Message message){
+		Collection<Box> boxes = new HashSet<Box>();
+		Box outBox = boxService
+				.findByActorAndName(message.getSender(),"Out Box");
+
+		boxes.add(outBox);
+		if (isSpam(message)){
+			for (Actor actor: message.getRecipients()){
+				Box spamBox = boxService.findByActorAndName(actor,"Spam Box");
+				boxes.add(spamBox);
 			}
+		}else{
+			for (Actor actor: message.getRecipients()){
+				Box inBox = boxService.findByActorAndName(actor,"In Box");
+				boxes.add(inBox);
 		}
 	}
 
+		for (Box box: boxes){
+			Collection<Message> messages = new HashSet<Message>(box.getMessages());
+			messages.add(message);
+			box.setMessages(messages);
+		}
+	}
+
+	private void removeFromBoxes(Message message, Collection<Box> boxes){
+		for (Box box: boxes){
+			Collection<Message> messages = new HashSet<Message>(box.getMessages());
+			messages.remove(message);
+			box.setMessages(messages);
+		}
+	}
 }

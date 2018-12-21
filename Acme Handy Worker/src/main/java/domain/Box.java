@@ -55,9 +55,7 @@ public class Box extends DomainEntity {
 	private Collection<Message> messages;
 
 	@Valid
-	@ElementCollection
-	@ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE,
-			CascadeType.DETACH, CascadeType.REFRESH })
+	@ManyToMany
 	public Collection<Message> getMessages() {
 		return messages;
 	}

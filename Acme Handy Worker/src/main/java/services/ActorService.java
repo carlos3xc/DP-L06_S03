@@ -74,7 +74,7 @@ public class ActorService {
 
 	// Other business methods -----
 
-	public Actor getByUserAccountId(UserAccount ua) {
+	public Actor findByUserAccountId(UserAccount ua) {
 		return actorRepository.findByUserAccountId(ua);
 	}
 
@@ -103,6 +103,10 @@ public class ActorService {
 		boxService.save(spambox);
 		boxService.save(trashbox);
 
+	}
+
+	public Actor findByPrincipal(){
+		return findByUserAccountId(LoginService.getPrincipal());
 	}
 
 	public void registerHandyWorker() {

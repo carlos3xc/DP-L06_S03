@@ -3,13 +3,7 @@ package domain;
 import java.util.Collection;
 import java.util.Date;
 
-import javax.persistence.Access;
-import javax.persistence.AccessType;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Temporal;
-import javax.persistence.TemporalType;
+import javax.persistence.*;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Past;
@@ -29,7 +23,6 @@ public class Message extends DomainEntity {
 	private String subject;
 	private String priority;
 	private Collection<String> tags;
-	private Boolean flagSpam;
 
 	// Constructors -----------------------------------------------------------
 
@@ -88,18 +81,10 @@ public class Message extends DomainEntity {
 		this.tags = tags;
 	}
 
-	public Boolean getFlagSpam() {
-		return flagSpam;
-	}
-
-	public void setFlagSpam(Boolean flagSpam) {
-		this.flagSpam = flagSpam;
-	}
-
 	// Relationships ----------------------------------------------------------
 
 	private Actor sender;
-	private Actor recipient;
+	private Collection<Actor> recipients;
 
 	@Valid
 	@ManyToOne(optional = false)
@@ -112,13 +97,14 @@ public class Message extends DomainEntity {
 	}
 
 	@Valid
-	@ManyToOne(optional = false)
-	public Actor getRecipient() {
-		return this.recipient;
+	@ManyToMany
+	@NotNull
+	public Collection<Actor> getRecipients() {
+		return this.recipients;
 	}
 
-	public void setRecipient(final Actor recipient) {
-		this.recipient = recipient;
+	public void setRecipients(Collection<Actor> recipients) {
+		this.recipients = recipients;
 	}
 
 }
